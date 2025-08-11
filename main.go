@@ -13,8 +13,8 @@ func main() {
 		fmt.Println(err)
 		os.Exit(0)
 	}
-	dbConfig.SetUser("wjseele")
-	if err = dbConfig.Write(); err != nil {
+	err = dbConfig.SetUser("wjseele")
+	if err != nil {
 		fmt.Println(err)
 		os.Exit(0)
 	}

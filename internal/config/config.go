@@ -24,7 +24,8 @@ func Read() (Config, error) {
 	return config, nil
 }
 
-func (cfg Config) Write() error {
+func (cfg Config) SetUser(userName string) error {
+	cfg.CurrentUser = userName
 	err := write(cfg)
 	if err != nil {
 		return err
@@ -32,16 +33,12 @@ func (cfg Config) Write() error {
 	return nil
 }
 
-func (cfg Config) SetUser(userName string) {
-	cfg.CurrentUser = userName
-}
-
 func getConfigFilePath() (string, error) {
 	homedir, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
-	configPath := homedir + configFileName
+	configPath := homedir + "/" + configFileName
 	return configPath, nil
 }
 
