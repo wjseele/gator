@@ -1,25 +1,40 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
+	"os"
+
 	_ "github.com/lib/pq"
 	"github.com/wjseele/gator/internal/config"
-	"os"
+	"github.com/wjseele/gator/internal/database"
 )
 
 func main() {
 	dbConfig, err := config.Read()
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(0)
+		os.Exit(1)
 	}
-	var configState state
-	configState.config = &dbConfig
+
+	db, err := sql.Open("postgres", dbConfig.DB_URL)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	dbQueries := database.New(db)
+
+	configState := state{
+		db:  dbQueries,
+		cfg: &dbConfig,
+	}
 
 	commands := commands{
 		commands: make(map[string]func(*state, command) error),
 	}
 	commands.register("login", handlerLogin)
+	commands.register("register", handlerRegister)
 
 	if len(os.Args) < 2 {
 		fmt.Println("No commands given.")
