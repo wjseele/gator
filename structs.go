@@ -1,8 +1,12 @@
 package main
 
-import "github.com/wjseele/gator/internal/config"
+import (
+	"github.com/wjseele/gator/internal/config"
+	"github.com/wjseele/gator/internal/database"
+)
 
 type state struct {
+	db     *database.Queries
 	config *config.Config
 }
 
