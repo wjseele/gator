@@ -15,7 +15,14 @@ func handlerLogin(s *state, cmd command) error {
 		fmt.Println("Username is required")
 		os.Exit(1)
 	}
-	err := s.cfg.SetUser(cmd.arguments[0])
+
+	_, err := s.db.GetUser(context.Background(), cmd.arguments[0])
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	err = s.cfg.SetUser(cmd.arguments[0])
 	if err != nil {
 		return err
 	}
