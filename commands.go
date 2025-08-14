@@ -58,13 +58,29 @@ func handlerRegister(s *state, cmd command) error {
 	return nil
 }
 
-func handlerReset(s *state, cmd command) error {
+func handlerReset(s *state, _ command) error {
 	err := s.db.ClearDB(context.Background())
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 	fmt.Println("Cleared all users from the database")
+	return nil
+}
+
+func handlerListUsers(s *state, _ command) error {
+	users, err := s.db.ListUsers(context.Background())
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	for _, name := range users {
+		if name == s.cfg.CurrentUser {
+			fmt.Printf("* %s (current)\n", name)
+		} else {
+			fmt.Printf("* %s\n", name)
+		}
+	}
 	return nil
 }
 
