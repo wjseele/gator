@@ -58,6 +58,16 @@ func handlerRegister(s *state, cmd command) error {
 	return nil
 }
 
+func handlerReset(s *state, cmd command) error {
+	err := s.db.ClearDB(context.Background())
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Println("Cleared all users from the database")
+	return nil
+}
+
 func (c *commands) run(s *state, cmd command) error {
 	err := c.commands[cmd.name](s, cmd)
 	return err
