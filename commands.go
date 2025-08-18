@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/wjseele/gator/internal/database"
+	"github.com/wjseele/gator/internal/rss"
 )
 
 func handlerLogin(s *state, cmd command) error {
@@ -81,6 +82,21 @@ func handlerListUsers(s *state, _ command) error {
 			fmt.Printf("* %s\n", name)
 		}
 	}
+	return nil
+}
+
+func handlerFetcher(s *state, cmd command) error {
+	if len(cmd.arguments) == 0 {
+		fmt.Println("URL is required")
+		os.Exit(1)
+	}
+
+	feed, err := rss.FetchFeed(context.Background(), cmd.arguments[0])
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Println(feed)
 	return nil
 }
 
