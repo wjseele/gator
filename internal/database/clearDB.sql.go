@@ -10,8 +10,7 @@ import (
 )
 
 const clearDB = `-- name: ClearDB :exec
-DELETE
-FROM users
+TRUNCATE users, feeds
 `
 
 func (q *Queries) ClearDB(ctx context.Context) error {

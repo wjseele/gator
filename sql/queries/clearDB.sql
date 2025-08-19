@@ -1,3 +1,2 @@
 -- name: ClearDB :exec
-DELETE
-FROM users;
+TRUNCATE users, feeds;

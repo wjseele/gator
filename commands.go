@@ -65,7 +65,7 @@ func handlerReset(s *state, _ command) error {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	fmt.Println("Cleared all users from the database")
+	fmt.Println("Cleared all users and feeds from the database")
 	return nil
 }
 
@@ -87,9 +87,8 @@ func handlerListUsers(s *state, _ command) error {
 
 func handlerFetcher(s *state, cmd command) error {
 	if len(cmd.arguments) == 0 {
-		// fmt.Println("URL is required")
-		// os.Exit(1)
-		cmd.arguments = append(cmd.arguments, "https://www.wagslane.dev/index.xml")
+		fmt.Println("URL is required")
+		os.Exit(1)
 	}
 
 	feed, err := rss.FetchFeed(context.Background(), cmd.arguments[0])
@@ -98,6 +97,37 @@ func handlerFetcher(s *state, cmd command) error {
 		os.Exit(1)
 	}
 	fmt.Println(feed)
+	return nil
+}
+
+func handlerAddFeed(s *state, cmd command) error {
+	if len(cmd.arguments) < 2 {
+		fmt.Println("Name and url for feed are required")
+		os.Exit(1)
+	}
+
+	userInfo, err := s.db.GetUser(context.Background(), s.cfg.CurrentUser)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	feedParams := database.AddFeedParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Name:      cmd.arguments[0],
+		Url:       cmd.arguments[1],
+		UserID:    userInfo.ID,
+	}
+	_, err = s.db.AddFeed(context.Background(), feedParams)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("New feed for %s was added\n", cmd.arguments[0])
+	fmt.Printf("ID: %v\nCreated at: %v\nUpdated at: %v\nName: %v\nURL: %v\nUser ID: %v\n", feedParams.ID, feedParams.CreatedAt, feedParams.UpdatedAt, feedParams.Name, feedParams.Url, feedParams.UserID)
 	return nil
 }
 
