@@ -39,6 +39,7 @@ func main() {
 	commands.register("users", handlerListUsers)
 	commands.register("agg", handlerFetcher)
 	commands.register("addfeed", handlerAddFeed)
+	commands.register("feeds", handlerListFeeds)
 
 	if len(os.Args) < 2 {
 		fmt.Println("No commands given.")

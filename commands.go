@@ -131,6 +131,25 @@ func handlerAddFeed(s *state, cmd command) error {
 	return nil
 }
 
+func handlerListFeeds(s *state, _ command) error {
+	feeds, err := s.db.ListFeeds(context.Background())
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Println("Here are the feeds currently in the database:")
+	for iter := range feeds {
+		fmt.Printf("Name: %s, URL: %s, ", feeds[iter].Name, feeds[iter].Url)
+		userName, err := s.db.GetUserByID(context.Background(), feeds[iter].UserID)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		fmt.Printf("Owner: %s\n", userName.Name)
+	}
+	return nil
+}
+
 func (c *commands) run(s *state, cmd command) error {
 	err := c.commands[cmd.name](s, cmd)
 	return err
