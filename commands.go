@@ -87,8 +87,9 @@ func handlerListUsers(s *state, _ command) error {
 
 func handlerFetcher(s *state, cmd command) error {
 	if len(cmd.arguments) == 0 {
-		fmt.Println("URL is required")
-		os.Exit(1)
+		// fmt.Println("URL is required")
+		// os.Exit(1)
+		cmd.arguments = append(cmd.arguments, "https://www.wagslane.dev/index.xml")
 	}
 
 	feed, err := rss.FetchFeed(context.Background(), cmd.arguments[0])
