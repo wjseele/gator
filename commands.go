@@ -126,6 +126,18 @@ func handlerAddFeed(s *state, cmd command) error {
 		os.Exit(1)
 	}
 
+	feedFollowParams := database.CreateFeedFollowParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		UserID:    userInfo.ID,
+		FeedID:    feedParams.ID,
+	}
+	_, err = s.db.CreateFeedFollow(context.Background(), feedFollowParams)
+	if err != nil {
+		return err
+	}
+
 	fmt.Printf("New feed for %s was added\n", cmd.arguments[0])
 	fmt.Printf("ID: %v\nCreated at: %v\nUpdated at: %v\nName: %v\nURL: %v\nUser ID: %v\n", feedParams.ID, feedParams.CreatedAt, feedParams.UpdatedAt, feedParams.Name, feedParams.Url, feedParams.UserID)
 	return nil
@@ -146,6 +158,52 @@ func handlerListFeeds(s *state, _ command) error {
 			os.Exit(1)
 		}
 		fmt.Printf("Owner: %s\n", userName.Name)
+	}
+	return nil
+}
+
+func handlerFollow(s *state, cmd command) error {
+	if len(cmd.arguments) == 0 {
+		fmt.Println("The URL is required.")
+		os.Exit(1)
+	}
+	feedID, err := s.db.GetFeedByURL(context.Background(), cmd.arguments[0])
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	userID, err := s.db.GetUser(context.Background(), s.cfg.CurrentUser)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	feedFollowParams := database.CreateFeedFollowParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		UserID:    userID.ID,
+		FeedID:    feedID,
+	}
+	newFollowedFeed, err := s.db.CreateFeedFollow(context.Background(), feedFollowParams)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Printf("User %s is now following feed %s\n", newFollowedFeed.UserName, newFollowedFeed.FeedName)
+	return nil
+}
+
+func handlerFollowing(s *state, _ command) error {
+	userID, err := s.db.GetUser(context.Background(), s.cfg.CurrentUser)
+	if err != nil {
+		return err
+	}
+	followedFeeds, err := s.db.GetFeedFollowsForUser(context.Background(), userID.ID)
+	if err != nil {
+		return err
+	}
+	for i := range followedFeeds {
+		fmt.Printf("Feed %s is followed by %s\n", followedFeeds[i].FeedName, followedFeeds[i].UserName)
 	}
 	return nil
 }

@@ -40,6 +40,8 @@ func main() {
 	commands.register("agg", handlerFetcher)
 	commands.register("addfeed", handlerAddFeed)
 	commands.register("feeds", handlerListFeeds)
+	commands.register("follow", handlerFollow)
+	commands.register("following", handlerFollowing)
 
 	if len(os.Args) < 2 {
 		fmt.Println("No commands given.")
@@ -52,5 +54,6 @@ func main() {
 	err = commands.run(&configState, command)
 	if err != nil {
 		fmt.Println(err)
+		os.Exit(1)
 	}
 }

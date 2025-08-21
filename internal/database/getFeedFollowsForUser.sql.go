@@ -7,22 +7,25 @@ package database
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const getFeedFollowsForUser = `-- name: GetFeedFollowsForUser :many
-SELECT feeds.name, users.name
+SELECT feeds.name AS feed_name, users.name AS user_name
 FROM feed_follows
 INNER JOIN feeds ON feeds.id = feed_follows.feed_id
-INNER JOIN users ON users.id = feed_follows.user_id
+INNER JOIN users ON $1 = feed_follows.user_id
+WHERE users.id = $1
 `
 
 type GetFeedFollowsForUserRow struct {
-	Name   string
-	Name_2 string
+	FeedName string
+	UserName string
 }
 
-func (q *Queries) GetFeedFollowsForUser(ctx context.Context) ([]GetFeedFollowsForUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, getFeedFollowsForUser)
+func (q *Queries) GetFeedFollowsForUser(ctx context.Context, userID uuid.UUID) ([]GetFeedFollowsForUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getFeedFollowsForUser, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +33,7 @@ func (q *Queries) GetFeedFollowsForUser(ctx context.Context) ([]GetFeedFollowsFo
 	var items []GetFeedFollowsForUserRow
 	for rows.Next() {
 		var i GetFeedFollowsForUserRow
-		if err := rows.Scan(&i.Name, &i.Name_2); err != nil {
+		if err := rows.Scan(&i.FeedName, &i.UserName); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
