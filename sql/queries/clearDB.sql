@@ -1,2 +1,2 @@
 -- name: ClearDB :exec
-TRUNCATE users, feeds;
+TRUNCATE users, feeds, feed_follows;
