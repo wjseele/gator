@@ -19,8 +19,7 @@ func handlerLogin(s *state, cmd command) error {
 
 	_, err := s.db.GetUser(context.Background(), cmd.arguments[0])
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
 	err = s.cfg.SetUser(cmd.arguments[0])
@@ -45,8 +44,7 @@ func handlerRegister(s *state, cmd command) error {
 	}
 	_, err := s.db.CreateUser(context.Background(), userParams)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
 	fmt.Printf("New user %s created\n", cmd.arguments[0])
@@ -62,8 +60,7 @@ func handlerRegister(s *state, cmd command) error {
 func handlerReset(s *state, _ command) error {
 	err := s.db.ClearDB(context.Background())
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 	fmt.Println("Cleared all users and feeds from the database")
 	return nil
@@ -72,8 +69,7 @@ func handlerReset(s *state, _ command) error {
 func handlerListUsers(s *state, _ command) error {
 	users, err := s.db.ListUsers(context.Background())
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 	for _, name := range users {
 		if name == s.cfg.CurrentUser {
@@ -93,22 +89,15 @@ func handlerFetcher(s *state, cmd command) error {
 
 	feed, err := rss.FetchFeed(context.Background(), cmd.arguments[0])
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 	fmt.Println(feed)
 	return nil
 }
 
-func handlerAddFeed(s *state, cmd command) error {
+func handlerAddFeed(s *state, cmd command, userID database.User) error {
 	if len(cmd.arguments) < 2 {
 		fmt.Println("Name and url for feed are required")
-		os.Exit(1)
-	}
-
-	userInfo, err := s.db.GetUser(context.Background(), s.cfg.CurrentUser)
-	if err != nil {
-		fmt.Println(err)
 		os.Exit(1)
 	}
 
@@ -118,19 +107,18 @@ func handlerAddFeed(s *state, cmd command) error {
 		UpdatedAt: time.Now(),
 		Name:      cmd.arguments[0],
 		Url:       cmd.arguments[1],
-		UserID:    userInfo.ID,
+		UserID:    userID.ID,
 	}
-	_, err = s.db.AddFeed(context.Background(), feedParams)
+	_, err := s.db.AddFeed(context.Background(), feedParams)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
 	feedFollowParams := database.CreateFeedFollowParams{
 		ID:        uuid.New(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		UserID:    userInfo.ID,
+		UserID:    userID.ID,
 		FeedID:    feedParams.ID,
 	}
 	_, err = s.db.CreateFeedFollow(context.Background(), feedFollowParams)
@@ -146,36 +134,28 @@ func handlerAddFeed(s *state, cmd command) error {
 func handlerListFeeds(s *state, _ command) error {
 	feeds, err := s.db.ListFeeds(context.Background())
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 	fmt.Println("Here are the feeds currently in the database:")
 	for iter := range feeds {
 		fmt.Printf("Name: %s, URL: %s, ", feeds[iter].Name, feeds[iter].Url)
 		userName, err := s.db.GetUserByID(context.Background(), feeds[iter].UserID)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			return err
 		}
 		fmt.Printf("Owner: %s\n", userName.Name)
 	}
 	return nil
 }
 
-func handlerFollow(s *state, cmd command) error {
+func handlerFollow(s *state, cmd command, userID database.User) error {
 	if len(cmd.arguments) == 0 {
 		fmt.Println("The URL is required.")
 		os.Exit(1)
 	}
 	feedID, err := s.db.GetFeedByURL(context.Background(), cmd.arguments[0])
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	userID, err := s.db.GetUser(context.Background(), s.cfg.CurrentUser)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 	feedFollowParams := database.CreateFeedFollowParams{
 		ID:        uuid.New(),
@@ -186,18 +166,13 @@ func handlerFollow(s *state, cmd command) error {
 	}
 	newFollowedFeed, err := s.db.CreateFeedFollow(context.Background(), feedFollowParams)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 	fmt.Printf("User %s is now following feed %s\n", newFollowedFeed.UserName, newFollowedFeed.FeedName)
 	return nil
 }
 
-func handlerFollowing(s *state, _ command) error {
-	userID, err := s.db.GetUser(context.Background(), s.cfg.CurrentUser)
-	if err != nil {
-		return err
-	}
+func handlerFollowing(s *state, _ command, userID database.User) error {
 	followedFeeds, err := s.db.GetFeedFollowsForUser(context.Background(), userID.ID)
 	if err != nil {
 		return err
@@ -206,6 +181,16 @@ func handlerFollowing(s *state, _ command) error {
 		fmt.Printf("Feed %s is followed by %s\n", followedFeeds[i].FeedName, followedFeeds[i].UserName)
 	}
 	return nil
+}
+
+func middlewareLoggedIn(handler func(s *state, cmd command, user database.User) error) func(*state, command) error {
+	return func(s *state, cmd command) error {
+		userID, err := s.db.GetUser(context.Background(), s.cfg.CurrentUser)
+		if err != nil {
+			return err
+		}
+		return handler(s, cmd, userID)
+	}
 }
 
 func (c *commands) run(s *state, cmd command) error {
