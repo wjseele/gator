@@ -1,4 +1,4 @@
 -- name: GetFeedByURL :one
 SELECT id
 FROM feeds
-WHERE name = $1;
+WHERE url = $1;
