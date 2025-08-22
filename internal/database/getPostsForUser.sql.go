@@ -7,7 +7,6 @@ package database
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/google/uuid"
 )
@@ -29,7 +28,7 @@ type GetPostsForUserParams struct {
 type GetPostsForUserRow struct {
 	Title       string
 	Url         string
-	Description sql.NullString
+	Description string
 }
 
 func (q *Queries) GetPostsForUser(ctx context.Context, arg GetPostsForUserParams) ([]GetPostsForUserRow, error) {

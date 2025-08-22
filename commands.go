@@ -117,6 +117,11 @@ func handlerListFeeds(s *state, _ command) error {
 }
 
 func (c *commands) run(s *state, cmd command) error {
+	_, ok := c.commands[cmd.name]
+	if !ok {
+		fmt.Println("Unknown command")
+		os.Exit(1)
+	}
 	err := c.commands[cmd.name](s, cmd)
 	return err
 }

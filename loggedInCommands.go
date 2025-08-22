@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -108,5 +109,34 @@ func handlerFollowing(s *state, _ command, userID database.User) error {
 	for i := range followedFeeds {
 		fmt.Printf("Feed %s is followed by %s\n", followedFeeds[i].FeedName, followedFeeds[i].UserName)
 	}
+	return nil
+}
+
+func handlerBrowse(s *state, cmd command, userID database.User) error {
+	limit := 2
+	if len(cmd.arguments) != 0 {
+		i, err := strconv.Atoi(cmd.arguments[0])
+		if err != nil {
+			return err
+		}
+		limit = i
+	}
+
+	getPostParams := database.GetPostsForUserParams{
+		UserID: userID.ID,
+		Limit:  int32(limit),
+	}
+
+	posts, err := s.db.GetPostsForUser(context.Background(), getPostParams)
+	if err != nil {
+		return err
+	}
+
+	for i := range posts {
+		fmt.Printf("Title: %s\n", posts[i].Title)
+		fmt.Printf("URL: %s\n", posts[i].Url)
+		fmt.Printf("Content: %s\n", posts[i].Description)
+	}
+
 	return nil
 }
