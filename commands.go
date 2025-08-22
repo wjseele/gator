@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/wjseele/gator/internal/database"
-	"github.com/wjseele/gator/internal/rss"
 )
 
 func handlerLogin(s *state, cmd command) error {
@@ -32,8 +31,7 @@ func handlerLogin(s *state, cmd command) error {
 
 func handlerRegister(s *state, cmd command) error {
 	if len(cmd.arguments) == 0 {
-		fmt.Println("Name for new user is required")
-		os.Exit(1)
+		return fmt.Errorf("Name for new user is required")
 	}
 
 	userParams := database.CreateUserParams{
@@ -91,7 +89,7 @@ func handlerFetcher(s *state, cmd command) error {
 		return err
 	}
 
-	fmt.Printf("Collecting feeds every %v", time_between_reqs)
+	fmt.Printf("Collecting feeds every %v\n", time_between_reqs)
 	ticker := time.NewTicker(time_between_reqs)
 	for ; ; <-ticker.C {
 		err = scrapeFeeds(s)

@@ -31,7 +31,7 @@ func scrapeFeeds(s *state) error {
 		return err
 	}
 	for post := range feed.Channel.Item {
-		fmt.Printf("Title: %s\n", feed.Channel.Item[post].Title)
+		fmt.Printf("From %s: %s\n", feed.Channel.Title, feed.Channel.Item[post].Title)
 	}
 	return nil
 }
