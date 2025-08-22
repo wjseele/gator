@@ -83,16 +83,22 @@ func handlerListUsers(s *state, _ command) error {
 
 func handlerFetcher(s *state, cmd command) error {
 	if len(cmd.arguments) == 0 {
-		fmt.Println("URL is required")
-		os.Exit(1)
+		return fmt.Errorf("Specify time in duration/unit (1s, 2h, etc)")
 	}
 
-	feed, err := rss.FetchFeed(context.Background(), cmd.arguments[0])
+	time_between_reqs, err := time.ParseDuration(cmd.arguments[0])
 	if err != nil {
 		return err
 	}
-	fmt.Println(feed)
-	return nil
+
+	fmt.Printf("Collecting feeds every %v", time_between_reqs)
+	ticker := time.NewTicker(time_between_reqs)
+	for ; ; <-ticker.C {
+		err = scrapeFeeds(s)
+		if err != nil {
+			return err
+		}
+	}
 }
 
 func handlerListFeeds(s *state, _ command) error {
